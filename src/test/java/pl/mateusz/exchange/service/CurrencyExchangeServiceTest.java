@@ -1,49 +1,43 @@
 package pl.mateusz.exchange.service;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.test.context.junit4.SpringRunner;
-import pl.mateusz.exchange.api.CurrencyExchangeController;
-import pl.mateusz.exchange.dao.CurrencyExchangeRepository;
-import pl.mateusz.exchange.model.CurrencyExchange;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import pl.mateusz.exchange.model.CurrencyExchangeEntity;
+import pl.mateusz.exchange.model.dto.CurrencyExchange;
+import pl.mateusz.exchange.model.dto.UserInput;
+import pl.mateusz.exchange.model.values.Currency;
 
 import java.math.BigDecimal;
 
-import static org.mockito.Mockito.mock;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class CurrencyExchangeServiceTest {
 
-    private final CurrencyExchangeRepository repository = mock(CurrencyExchangeRepository.class);
-    private CurrencyExchangeService currencyExchangeService;
+    @InjectMocks
+    CurrencyExchangeService service;
 
-    @Before
-    public void setup() {
-        currencyExchangeService = new CurrencyExchangeService(repository);
-    }
-
-    @After
-    public void end() {
-        currencyExchangeService = null;
-    }
+    @Mock
+    CurrencyExchangeRepository dao;
 
     @Test
-    public void checkIfExchangeIsCorrectWhenAssertingTwoSameObjects() {
-        when(repository.findFirstByCurrencyFromAndCurrencyTo("PLN", "USD"))
-                .thenReturn(
-                        new CurrencyExchange("PLN", "USD", BigDecimal.valueOf(4))
-                );
-        Assert.assertEquals(currencyExchangeService.exchangeCurrency("PLN", "USD"),
-                new CurrencyExchange("PLN", "USD", BigDecimal.valueOf(4)));
+    public void serviceShouldMakeCorrectLogicWhenMethodInvoked() {
+    //given
+        CurrencyExchangeEntity currencyExchangeEntity =
+                new CurrencyExchangeEntity(Currency.PLN,Currency.EUR,new BigDecimal("0.22"));
+    //when
+        when(dao.findByCurrencyFromAndAndCurrencyTo(Currency.PLN, Currency.EUR))
+                .thenReturn(currencyExchangeEntity);
+
+        CurrencyExchange currencyExchange =
+                service.exchangeCurrency(
+                        new UserInput(BigDecimal.valueOf(100),Currency.PLN,Currency.EUR));
+    //then
+        assertEquals(currencyExchange.getResult(),new BigDecimal("22.00"));
     }
 
-    @Test(expected = NullPointerException.class)
-    public void whenExceptionThrown_thenExpectationSatisfied() {
-        CurrencyExchange currencyExchange = null;
-        currencyExchange.getCurrencyMultiplier();
-    }
 }

@@ -1,11 +1,11 @@
 package pl.mateusz.exchange.service;
 
 import org.springframework.stereotype.Service;
-import pl.mateusz.exchange.dao.CurrencyExchangeRepository;
-import pl.mateusz.exchange.model.CurrencyExchange;
+import pl.mateusz.exchange.model.CurrencyExchangeEntity;
+import pl.mateusz.exchange.model.dto.CurrencyExchange;
+import pl.mateusz.exchange.model.dto.UserInput;
 
 import javax.persistence.EntityNotFoundException;
-
 
 @Service
 public class CurrencyExchangeService {
@@ -16,13 +16,12 @@ public class CurrencyExchangeService {
         this.currencyExchangeRepository = currencyExchangeRepository;
     }
 
-    public CurrencyExchange exchangeCurrency(String from, String to) {
-        CurrencyExchange currencyExchange = currencyExchangeRepository.findFirstByCurrencyFromAndCurrencyTo(from, to);
-        if (currencyExchange == null) {
-            throw new EntityNotFoundException("Unable to find data for " + from + " to " + to);
+    public CurrencyExchange exchangeCurrency(UserInput jsonBody) {
+        CurrencyExchangeEntity currencyExchangeEntity = currencyExchangeRepository
+                .findByCurrencyFromAndAndCurrencyTo(jsonBody.getCurrencyFrom(), jsonBody.getCurrencyTo());
+        if (currencyExchangeEntity == null) {
+            throw new EntityNotFoundException("This currency exchange is not possible.");
         }
-
-        return new CurrencyExchange(from, to, currencyExchange.getCurrencyMultiplier());
-
+        return CurrencyExchange.of(currencyExchangeEntity.getCurrencyMultiplier().multiply(jsonBody.getAmount()));
     }
 }

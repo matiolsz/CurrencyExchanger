@@ -2,33 +2,45 @@ package pl.mateusz.exchange.api;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
-import pl.mateusz.exchange.model.CurrencyExchange;
+import org.springframework.web.bind.annotation.*;
+import pl.mateusz.exchange.model.dto.UserInput;
+import pl.mateusz.exchange.model.dto.CurrencyExchange;
+import pl.mateusz.exchange.model.values.Currency;
 import pl.mateusz.exchange.service.CurrencyExchangeService;
 
 import javax.persistence.EntityNotFoundException;
+import java.math.BigDecimal;
 
 @RestController
+@RequestMapping("/currency-exchange")
 public class CurrencyExchangeController {
 
-   private CurrencyExchangeService currencyExchangeService;
+   private final CurrencyExchangeService currencyExchangeService;
 
    public CurrencyExchangeController(CurrencyExchangeService currencyExchangeService) {
        this.currencyExchangeService = currencyExchangeService;
    }
 
-    @GetMapping("/currency-exchange/{from}/{to}")
-    public CurrencyExchange retrieveCurrencyExchangeEntityWithValue(
-            @PathVariable String from,
-            @PathVariable String to) {
-    return currencyExchangeService.exchangeCurrency(from, to);
+   @GetMapping("/hello")
+   public String hello(){
+       return "hello";
+   }
+
+    @GetMapping("/{amount}/{from}/{to}")
+    public CurrencyExchange createFromParameters(
+            @PathVariable BigDecimal amount,
+            @PathVariable Currency from,
+            @PathVariable Currency to) {
+    return currencyExchangeService.exchangeCurrency(new UserInput(amount,from,to));
+    }
+
+    @GetMapping(consumes = "application/json", produces = "application/json")
+    public CurrencyExchange createFromJson(@RequestBody UserInput userInput) {
+        return currencyExchangeService.exchangeCurrency(userInput);
     }
 
     @ExceptionHandler(EntityNotFoundException.class)
-    public ResponseEntity<String> handlyMyCustomException(EntityNotFoundException e) {
+    public ResponseEntity<String> handleMyCustomException(EntityNotFoundException e) {
         return new ResponseEntity<>("Something happened: " + e.getMessage(), HttpStatus.NOT_FOUND);
     }
 }
